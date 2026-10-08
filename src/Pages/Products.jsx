@@ -1,219 +1,122 @@
-import React, { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import useStore from "../hooks/useStore";
+import ProductCard from "../components/ProductCard";
+import { API_BASE_URL } from "../api";
+
+const SORTS = {
+  featured: { label: "Featured", fn: null },
+  "price-asc": { label: "Price: Low to High", fn: (a, b) => a.price - b.price },
+  "price-desc": { label: "Price: High to Low", fn: (a, b) => b.price - a.price },
+  name: { label: "Name: A to Z", fn: (a, b) => a.name.localeCompare(b.name) },
+};
 
 const Products = () => {
-    // 1. Declare component states
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const { products, categories, productSource, productsLoading } = useStore();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-    // 2. Fetch products from your backend API
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                // Adjust the URL endpoint if your backend expects parameters
-                const response = await fetch("http://localhost:8080/indivisualController/getProduct?productPkId=null");
+  const search = searchParams.get("search") || "";
+  const category = searchParams.get("category") || "";
+  const sort = SORTS[searchParams.get("sort")] ? searchParams.get("sort") : "featured";
 
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
-                }
+  const updateParam = (key, value) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    setSearchParams(next);
+  };
 
-                const data = await response.json();
+  const term = search.trim().toLowerCase();
+  let visible = products.filter((p) => {
+    const matchesCategory =
+      !category || (p.category || "").toLowerCase() === category.toLowerCase();
+    const matchesSearch =
+      !term ||
+      [p.name, p.brand, p.category, p.description, p.color]
+        .filter(Boolean)
+        .some((field) => field.toLowerCase().includes(term));
+    return matchesCategory && matchesSearch;
+  });
+  if (SORTS[sort].fn) visible = [...visible].sort(SORTS[sort].fn);
 
-                // Handles response whether it returns an array directly or inside a wrapper object (e.g., data.data or data.products)
-                if (Array.isArray(data)) {
-                    setProducts(data);
-                } else if (Array.isArray(data.products)) {
-                    setProducts(data.products);
-                } else if (Array.isArray(data.data)) {
-                    setProducts(data.data);
-                } else if (data && typeof data === "object") {
-                    // If backend returns a single product object instead of array
-                    setProducts([data]);
-                } else {
-                    setProducts([]);
-                }
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
+  const title = category || (search ? "Search Results" : "All Products");
 
-        fetchProducts();
-    }, []);
+  return (
+    <div className="page">
+      <div className="container">
+        <h1 className="page-title">{title}</h1>
 
-    // 3. Render Loading State
-    if (loading) {
-        return (
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    minHeight: "100vh",
-                    backgroundColor: "#f5f5f5"
-                }}
-            >
-                <h2>Loading products...</h2>
-            </div>
-        );
-    }
+        {!productsLoading && productSource !== "backend" && (
+          <div className="notice">
+            Couldn't reach the backend at {API_BASE_URL}, so sample products are shown.
+          </div>
+        )}
 
-    // 4. Render Error State
-    if (error) {
-        return (
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    minHeight: "100vh",
-                    backgroundColor: "#f5f5f5",
-                    color: "#d9534f"
-                }}
-            >
-                <h2>Error loading products</h2>
-                <p>{error}</p>
+        <div className="toolbar">
+          <p className="muted">
+            {productsLoading ? "Loading products..." : `${visible.length} products`}
+            {search && (
+              <>
+                {" "}for “{search}” ·{" "}
                 <button
-                    onClick={() => window.location.reload()}
-                    style={{
-                        padding: "10px 20px",
-                        marginTop: "10px",
-                        backgroundColor: "#333",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "5px",
-                        cursor: "pointer"
-                    }}
+                  onClick={() => updateParam("search", "")}
+                  style={{ background: "none", border: "none", textDecoration: "underline", cursor: "pointer", font: "inherit" }}
                 >
-                    Retry
+                  Clear search
                 </button>
-            </div>
-        );
-    }
-
-    // 5. Render Main UI
-    return (
-        <div
-            style={{
-                padding: "100px 40px 40px 40px",
-                backgroundColor: "#f5f5f5",
-                minHeight: "100vh"
-            }}
-        >
-            <h1
-                style={{
-                    textAlign: "center",
-                    marginBottom: "40px"
-                }}
-            >
-                Products
-            </h1>
-
-            {products.length === 0 ? (
-                <div style={{ textAlign: "center", marginTop: "50px" }}>
-                    <h3>No products found.</h3>
-                </div>
-            ) : (
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-                        gap: "25px"
-                    }}
-                >
-                    {products.map((product, index) => {
-                        // Fallbacks to handle common database/Java backend property names
-                        const id = product.productPkId || product.id || index;
-                        const name = product.productName || product.name || "Untitled Product";
-                        const price = product.productPrice || product.price || 0;
-                        const image = product.productImage || product.image || "https://via.placeholder.com/300";
-
-                        return (
-                            <div
-                                key={id}
-                                style={{
-                                    backgroundColor: "white",
-                                    borderRadius: "10px",
-                                    overflow: "hidden",
-                                    boxShadow: "0px 2px 10px rgba(0,0,0,0.1)"
-                                }}
-                            >
-                                <img
-                                    src={image}
-                                    alt={name}
-                                    style={{
-                                        width: "100%",
-                                        height: "300px",
-                                        objectFit: "cover"
-                                    }}
-                                    onError={(e) => {
-                                        // Fallback if the image URL fails to load
-                                        e.target.onerror = null;
-                                        e.target.src = "https://via.placeholder.com/300?text=No+Image";
-                                    }}
-                                />
-
-                                <div style={{ padding: "15px" }}>
-                                    <h3>{name}</h3>
-
-                                    <h4>₹{price}</h4>
-
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            marginTop: "15px"
-                                        }}
-                                    >
-                                        <button
-                                            style={{
-                                                border: "none",
-                                                padding: "10px",
-                                                cursor: "pointer",
-                                                borderRadius: "5px"
-                                            }}
-                                        >
-                                            ❤️
-                                        </button>
-
-                                        <button
-                                            style={{
-                                                backgroundColor: "black",
-                                                color: "white",
-                                                border: "none",
-                                                padding: "10px 15px",
-                                                cursor: "pointer",
-                                                borderRadius: "5px"
-                                            }}
-                                        >
-                                            Add To Cart
-                                        </button>
-                                    </div>
-
-                                    <button
-                                        style={{
-                                            width: "100%",
-                                            marginTop: "10px",
-                                            padding: "10px",
-                                            backgroundColor: "#444",
-                                            color: "white",
-                                            border: "none",
-                                            borderRadius: "5px",
-                                            cursor: "pointer"
-                                        }}
-                                    >
-                                        View Details
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+              </>
             )}
+          </p>
+
+          <div className="toolbar-group">
+            <select
+              className="form-input"
+              style={{ marginTop: 0, width: "auto" }}
+              value={category}
+              onChange={(e) => updateParam("category", e.target.value)}
+              aria-label="Filter by category"
+            >
+              <option value="">All Categories</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="form-input"
+              style={{ marginTop: 0, width: "auto" }}
+              value={sort}
+              onChange={(e) => updateParam("sort", e.target.value === "featured" ? "" : e.target.value)}
+              aria-label="Sort products"
+            >
+              {Object.entries(SORTS).map(([key, { label }]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-    );
+
+        {visible.length === 0 ? (
+          <div className="empty-state">
+            <h3>No products found.</h3>
+            <p>Try a different search or category.</p>
+            <Link to="/products" className="btn">
+              View All Products
+            </Link>
+          </div>
+        ) : (
+          <div className="grid">
+            {visible.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default Products;

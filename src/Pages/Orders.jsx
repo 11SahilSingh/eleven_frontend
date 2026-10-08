@@ -1,72 +1,80 @@
-import React from "react";
+import { Link } from "react-router-dom";
+import useStore from "../hooks/useStore";
+import { formatDate, formatPrice, PAYMENT_LABELS } from "../utils/format";
 
 function Orders() {
-  const orders = [
-    {
-      id: "ORD123456",
-      productName: "Black Oversized T-Shirt",
-      image: "https://via.placeholder.com/150",
-      quantity: 2,
-      price: 1598,
-      status: "Delivered",
-      date: "20 Sep 2026",
-    },
-    {
-      id: "ORD123457",
-      productName: "Blue Denim Jacket",
-      image: "https://via.placeholder.com/150",
-      quantity: 1,
-      price: 1999,
-      status: "Shipped",
-      date: "18 Sep 2026",
-    },
-  ];
+  const { myOrders, updateOrderStatus } = useStore();
+
+  const cancelOrder = (orderId) => {
+    if (window.confirm("Cancel this order?")) updateOrderStatus(orderId, "Cancelled");
+  };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        padding: "30px",
-        backgroundColor: "#f5f5f5",
-      }}
-    >
-      <h1 style={{ textAlign: "center", marginBottom: "30px" }}>
-        My Orders
-      </h1>
+    <div className="page">
+      <div className="container" style={{ maxWidth: "900px" }}>
+        <h1 className="page-title">My Orders</h1>
 
-      {orders.map((order) => (
-        <div
-          key={order.id}
-          style={{
-            background: "white",
-            marginBottom: "20px",
-            padding: "20px",
-            borderRadius: "10px",
-            display: "flex",
-            gap: "20px",
-            alignItems: "center",
-          }}
-        >
-          <img
-            src={order.image}
-            alt={order.productName}
-            width="120"
-            height="120"
-          />
-
-          <div>
-            <h3>{order.productName}</h3>
-            <p>Order ID: {order.id}</p>
-            <p>Quantity: {order.quantity}</p>
-            <p>Price: ₹{order.price}</p>
-            <p>Date: {order.date}</p>
-            <p>Status: {order.status}</p>
+        {myOrders.length === 0 ? (
+          <div className="empty-state">
+            <h2>No orders yet</h2>
+            <p>When you place an order, it will show up here.</p>
+            <Link to="/products" className="btn">
+              Start Shopping
+            </Link>
           </div>
-        </div>
-      ))}
+        ) : (
+          myOrders.map((order) => (
+            <div key={order.id} className="panel" style={{ marginBottom: "20px", padding: "20px" }}>
+              <div className="toolbar" style={{ marginBottom: "12px" }}>
+                <div>
+                  <h3>Order {order.id}</h3>
+                  <p className="muted" style={{ fontSize: "14px" }}>
+                    Placed on {formatDate(order.date)} ·{" "}
+                    {PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod}
+                  </p>
+                </div>
+                <span className={`status status-${order.status}`}>{order.status}</span>
+              </div>
+
+              {order.items.map((item) => (
+                <div
+                  key={item.key}
+                  style={{ display: "flex", gap: "16px", alignItems: "center", padding: "10px 0", borderTop: "1px solid #eee" }}
+                >
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    style={{ width: "70px", height: "84px", objectFit: "cover", borderRadius: "6px" }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontWeight: 600 }}>{item.name}</p>
+                    <p className="muted" style={{ fontSize: "14px" }}>
+                      {item.size ? `Size ${item.size} · ` : ""}Qty {item.quantity}
+                    </p>
+                  </div>
+                  <p>{formatPrice(item.price * item.quantity)}</p>
+                </div>
+              ))}
+
+              <div className="toolbar" style={{ borderTop: "1px solid #eee", paddingTop: "12px", marginBottom: 0 }}>
+                <p className="muted" style={{ fontSize: "14px" }}>
+                  Deliver to: {order.shipping?.fullName}, {order.shipping?.city} {order.shipping?.pincode}
+                </p>
+                <div className="toolbar-group">
+                  <strong>Total: {formatPrice(order.total)}</strong>
+                  {order.status === "Pending" && (
+                    <button className="btn btn-outline btn-sm" onClick={() => cancelOrder(order.id)}>
+                      Cancel Order
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
 
 export default Orders;
-

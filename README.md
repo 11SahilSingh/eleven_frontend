@@ -1,16 +1,41 @@
-# React + Vite
+# ELEVEN – Fashion Store (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Run it
 
-Currently, two official plugins are available:
+```bash
+npm install
+npm run dev
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Backend
 
-## React Compiler
+Products are loaded from the Spring Boot API at `http://localhost:8080`
+(`/indivisualController/getProduct`). If it isn't reachable, the app shows a
+built-in sample catalog instead. To use a different backend URL, copy
+`.env.example` to `.env` and change `VITE_API_URL`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+All API calls live in `src/api.js`. Login, registration, cart, orders and the
+admin pages currently save their data in the browser (localStorage) through
+`src/context/StoreProvider.jsx`. When the matching backend endpoints exist, add
+them to `src/api.js` and call them from the store.
 
-## Expanding the ESLint configuration
+> Passwords are stored in the browser only for this demo. Replace this with
+> backend authentication before going live.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Demo admin account
+
+- Email: `admin@eleven.com`
+- Password: `admin123`
+
+## Main routes
+
+| Route | Page |
+| --- | --- |
+| `/` | Home |
+| `/products?category=Men&search=shirt` | Product list with filters |
+| `/product/:id` | Product details |
+| `/category` | Categories |
+| `/cart`, `/wishlist` | Cart, wishlist |
+| `/login`, `/register` | Account |
+| `/checkout`, `/orders`, `/userprofile` | Logged-in pages |
+| `/adminDashboard`, `/admin/*` | Admin pages (admin only) |

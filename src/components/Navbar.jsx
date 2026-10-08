@@ -1,5 +1,7 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import useStore from "../hooks/useStore";
+import "../css/Navbar.css";
 
 import elevenlogo from "../assets/elevenlogo.jpeg";
 import wishlistlogo from "../assets/wishlistlogo.jpeg";
@@ -8,105 +10,70 @@ import menu from "../assets/menu.jpeg";
 import userlogo from "../assets/userlogo.jpeg";
 
 const Navbar = () => {
-  return (
-    <nav
-  style={{
-    backgroundColor: "black",
-    height: "70px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0 30px",
-    position: "fixed",
-    top: "0",
-    left: "0",
-    width: "100%",
-    zIndex: "1000"
-  }}
->
+  const navigate = useNavigate();
+  const { cartCount, wishlist, currentUser, isAdmin } = useStore();
+  const [query, setQuery] = useState("");
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const q = query.trim();
+    navigate(q ? `/products?search=${encodeURIComponent(q)}` : "/products");
+  };
+
+  return (
+    <nav className="navbar">
       {/* Left Section */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "20px",
-        }}
-      >
-        <Link to="/">
-          <img
-            src={elevenlogo}
-            alt="Logo"
-            style={{ height: "40px" }}
-          />
+      <div className="navbar-left">
+        <Link to="/" aria-label="ELEVEN home">
+          <img src={elevenlogo} alt="ELEVEN" style={{ height: "40px" }} />
         </Link>
 
-        <Link to="/category">
-          <img
-            src={menu}
-            alt="Menu"
-            style={{ height: "31px" }}
-          />
+        <Link to="/category" aria-label="Categories">
+          <img src={menu} alt="Categories" style={{ height: "31px" }} />
         </Link>
       </div>
 
       {/* Search Bar */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          justifyContent: "center",
-          margin: "0 40px",
-        }}
-      >
+      <form className="navbar-search" onSubmit={handleSearch} role="search">
         <input
-          type="text"
+          type="search"
           placeholder="Search products..."
-          style={{
-            width: "60%",
-            padding: "10px",
-            borderRadius: "20px",
-            border: "none",
-            outline: "none",
-          }}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search products"
         />
-      </div>
+      </form>
 
       {/* Right Section */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "25px",
-        }}
-      >
-        <Link to="/wishlist">
-          <img
-            src={wishlistlogo}
-            alt="Wishlist"
-            style={{ height: "31px" }}
-          />
+      <div className="navbar-right">
+        {isAdmin && (
+          <Link to="/adminDashboard" className="navbar-link">
+            Admin
+          </Link>
+        )}
+
+        {!currentUser && (
+          <Link to="/login" className="navbar-link">
+            Login
+          </Link>
+        )}
+
+        <Link to="/wishlist" className="navbar-icon" aria-label="Wishlist">
+          <img src={wishlistlogo} alt="Wishlist" style={{ height: "31px" }} />
+          {wishlist.length > 0 && <span className="navbar-badge">{wishlist.length}</span>}
         </Link>
 
-        <Link to="/cart">
-          <img
-            src={cartlogo}
-            alt="Cart"
-            style={{ height: "40px" }}
-          />
+        <Link to="/cart" className="navbar-icon" aria-label="Cart">
+          <img src={cartlogo} alt="Cart" style={{ height: "40px" }} />
+          {cartCount > 0 && <span className="navbar-badge">{cartCount}</span>}
         </Link>
 
-        <Link to="/userprofile">
-          <img
-            src={userlogo}
-            alt="Profile"
-            style={{ height: "25px" }}
-          />
+        <Link to="/userprofile" className="navbar-icon" aria-label="Profile">
+          <img src={userlogo} alt="Profile" style={{ height: "25px" }} />
         </Link>
       </div>
-
     </nav>
-  )
-}
+  );
+};
 
-export default Navbar
+export default Navbar;

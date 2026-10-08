@@ -1,0 +1,24 @@
+HOW TO RUN (Flutter REST API Lab)
+
+1. Create a new project:
+     flutter create flutter_api_lab
+     cd flutter_api_lab
+
+2. Replace pubspec.yaml with the one provided (or just add "http: ^1.1.0"
+   under dependencies), then run:
+     flutter pub get
+
+3. Add internet permission in android/app/src/main/AndroidManifest.xml,
+   just above the <application> tag:
+     <uses-permission android:name="android.permission.INTERNET"/>
+
+4. Part (a): copy part_a_fetch_api/main.dart to lib/main.dart and run:
+     flutter run
+   Output: shows "delectus aut autem" (title of to-do #1).
+
+5. Part (b): copy part_b_display_list/main.dart to lib/main.dart and run:
+     flutter run
+   Output: summary card (Total: 200, Completed: 90, Pending: 110) followed
+   by a scrollable list of to-do cards. Completed items show a green tick
+   and struck-through title; pending items show a red cross. Pull down to
+   refresh. If offline, an error message with a Retry button appears.

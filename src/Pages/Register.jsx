@@ -1,110 +1,71 @@
-
-import React, { useState } from "react";
+import { useState } from "react";
+import { Link, Navigate, useLocation } from "react-router-dom";
+import useStore from "../hooks/useStore";
 
 function Register() {
+  const location = useLocation();
+  const { register, currentUser } = useStore();
+
   const [user, setUser] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+  const [error, setError] = useState("");
+
+  const redirectTo = location.state?.from?.pathname || "/";
+
+  if (currentUser) return <Navigate to={redirectTo} replace />;
 
   const handleChange = (e) => {
-    setUser({
-      ...user,
-      [e.target.name]: e.target.value,
-    });
+    setUser({ ...user, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setError("");
 
+    if (user.name.trim().length < 2) {
+      setError("Please enter your full name.");
+      return;
+    }
+    if (user.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
     if (user.password !== user.confirmPassword) {
-      alert("Passwords do not match");
+      setError("Passwords do not match.");
       return;
     }
 
-    console.log(user);
-
-    // Call Spring Boot Register API
+    // On success the component re-renders and redirects.
+    const result = register(user);
+    if (!result.ok) setError(result.error);
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "#f5f5f5",
-      }}
-    >
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          width: "400px",
-          background: "white",
-          padding: "30px",
-          borderRadius: "10px",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-        }}
-      >
+    <div className="page" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+      <form onSubmit={handleSubmit} className="panel" style={{ width: "100%", maxWidth: "420px" }}>
         <h2 style={{ textAlign: "center" }}>Create Account</h2>
 
-        <input
-          type="text"
-          name="name"
-          placeholder="Full Name"
-          onChange={handleChange}
-          required
-          style={{ width: "100%", padding: "10px", marginTop: "15px" }}
-        />
+        <input className="form-input" type="text" name="name" placeholder="Full Name" value={user.name} onChange={handleChange} autoComplete="name" required />
+        <input className="form-input" type="email" name="email" placeholder="Email" value={user.email} onChange={handleChange} autoComplete="email" required />
+        <input className="form-input" type="password" name="password" placeholder="Password (min 6 characters)" value={user.password} onChange={handleChange} autoComplete="new-password" required />
+        <input className="form-input" type="password" name="confirmPassword" placeholder="Confirm Password" value={user.confirmPassword} onChange={handleChange} autoComplete="new-password" required />
 
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          onChange={handleChange}
-          required
-          style={{ width: "100%", padding: "10px", marginTop: "15px" }}
-        />
+        {error && <p className="form-error">{error}</p>}
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          onChange={handleChange}
-          required
-          style={{ width: "100%", padding: "10px", marginTop: "15px" }}
-        />
-
-        <input
-          type="password"
-          name="confirmPassword"
-          placeholder="Confirm Password"
-          onChange={handleChange}
-          required
-          style={{ width: "100%", padding: "10px", marginTop: "15px" }}
-        />
-
-        <button
-          type="submit"
-          style={{
-            width: "100%",
-            padding: "12px",
-            marginTop: "20px",
-            background: "black",
-            color: "white",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
+        <button type="submit" className="btn btn-block" style={{ marginTop: "20px" }}>
           Register
         </button>
+
+        <p className="form-footer">
+          Already have an account? <Link to="/login" state={location.state}>Login</Link>
+        </p>
       </form>
     </div>
   );
 }
 
 export default Register;
-

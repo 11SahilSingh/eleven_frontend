@@ -1,114 +1,94 @@
-
-import React, { useState } from "react";
+import { useState } from "react";
+import useStore from "../hooks/useStore";
+import { formatDate } from "../utils/format";
 
 function ManageUsers() {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "Sahil",
-      email: "sahil@gmail.com",
-      phone: "9876543210",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Rahul",
-      email: "rahul@gmail.com",
-      phone: "9876543211",
-      status: "Blocked",
-    },
-  ]);
+  const { users, orders, currentUser, toggleUserStatus, deleteUser } = useStore();
+  const [search, setSearch] = useState("");
 
-  const deleteUser = (id) => {
-    setUsers(users.filter((user) => user.id !== id));
-  };
+  const term = search.trim().toLowerCase();
+  const visible = users.filter(
+    (u) =>
+      !term ||
+      [u.name, u.email, u.phone].filter(Boolean).some((field) => field.toLowerCase().includes(term))
+  );
 
-  const toggleStatus = (id) => {
-    setUsers(
-      users.map((user) =>
-        user.id === id
-          ? {
-              ...user,
-              status:
-                user.status === "Active"
-                  ? "Blocked"
-                  : "Active",
-            }
-          : user
-      )
-    );
+  const orderCount = (userId) => orders.filter((o) => o.userId === userId).length;
+
+  const handleDelete = (user) => {
+    if (window.confirm(`Delete ${user.name}'s account? This cannot be undone.`)) {
+      deleteUser(user.id);
+    }
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        padding: "30px",
-        backgroundColor: "#f5f5f5",
-      }}
-    >
-      <h1>Manage Users</h1>
+    <div className="page">
+      <div className="container">
+        <h1 style={{ marginBottom: "20px" }}>Manage Users</h1>
 
-      <input
-        type="text"
-        placeholder="Search User..."
-        style={{
-          width: "300px",
-          padding: "10px",
-          marginBottom: "20px",
-        }}
-      />
+        <input
+          className="form-input"
+          type="search"
+          placeholder="Search User..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ maxWidth: "320px", marginTop: 0, marginBottom: "20px" }}
+        />
 
-      <table
-        style={{
-          width: "100%",
-          background: "white",
-          borderCollapse: "collapse",
-        }}
-      >
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
-              <td>{user.id}</td>
-              <td>{user.name}</td>
-              <td>{user.email}</td>
-              <td>{user.phone}</td>
-              <td>{user.status}</td>
-
-              <td>
-                <button
-                  onClick={() => toggleStatus(user.id)}
-                >
-                  {user.status === "Active"
-                    ? "Block"
-                    : "Unblock"}
-                </button>
-
-                <button
-                  onClick={() => deleteUser(user.id)}
-                  style={{ marginLeft: "10px" }}
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Orders</th>
+                <th>Joined</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((user) => {
+                const isSelf = user.id === currentUser?.id;
+                return (
+                  <tr key={user.id}>
+                    <td>{user.name}{isSelf && <span className="muted"> (you)</span>}</td>
+                    <td>{user.email}</td>
+                    <td>{user.phone || "—"}</td>
+                    <td style={{ textTransform: "capitalize" }}>{user.role}</td>
+                    <td>{orderCount(user.id)}</td>
+                    <td style={{ whiteSpace: "nowrap" }}>{formatDate(user.createdAt)}</td>
+                    <td><span className={`status status-${user.status}`}>{user.status}</span></td>
+                    <td>
+                      {isSelf ? (
+                        <span className="muted">—</span>
+                      ) : (
+                        <div className="table-actions">
+                          <button className="btn btn-outline btn-sm" onClick={() => toggleUserStatus(user.id)}>
+                            {user.status === "Active" ? "Block" : "Unblock"}
+                          </button>
+                          <button className="btn btn-danger btn-sm" onClick={() => handleDelete(user)}>
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+              {visible.length === 0 && (
+                <tr>
+                  <td colSpan="8" style={{ textAlign: "center" }} className="muted">No users found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default ManageUsers;
-

@@ -1,102 +1,47 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import useStore from "../hooks/useStore";
+import { placeholderImage } from "../utils/placeholder";
 
 const Categories = () => {
+  const { categories, products } = useStore();
 
-    const navigate = useNavigate();
+  const countFor = (name) =>
+    products.filter((p) => (p.category || "").toLowerCase() === name.toLowerCase()).length;
 
-    const categories = [
-        {
-            id: 1,
-            name: "Men",
-            image: "https://via.placeholder.com/250x250?text=Men"
-        },
-        {
-            id: 2,
-            name: "Women",
-            image: "https://via.placeholder.com/250x250?text=Women"
-        },
-        {
-            id: 3,
-            name: "Kids",
-            image: "https://via.placeholder.com/250x250?text=Kids"
-        },
-        {
-            id: 4,
-            name: "Sports",
-            image: "https://via.placeholder.com/250x250?text=Sports"
-        }
-    ];
+  return (
+    <div className="page">
+      <div className="container">
+        <h1 className="page-title">Shop By Category</h1>
 
-    return (
-        <div
-            style={{
-                padding: "40px",
-                minHeight: "100vh",
-                backgroundColor: "#f5f5f5"
-            }}
-        >
-
-            <h1
-                style={{
-                    textAlign: "center",
-                    marginBottom: "40px"
-                }}
-            >
-                Shop By Category
-            </h1>
-
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: "30px",
-                    flexWrap: "wrap"
-                }}
-            >
-
-                {categories.map((category) => (
-
-                    <div
-                        key={category.id}
-                        onClick={() => navigate(`/products/${category.id}`)}
-                        style={{
-                            width: "250px",
-                            backgroundColor: "white",
-                            borderRadius: "10px",
-                            overflow: "hidden",
-                            cursor: "pointer",
-                            boxShadow: "0px 2px 10px rgba(0,0,0,0.1)"
-                        }}
-                    >
-
-                        <img
-                            src={category.image}
-                            alt={category.name}
-                            style={{
-                                width: "100%",
-                                height: "250px",
-                                objectFit: "cover"
-                            }}
-                        />
-
-                        <h3
-                            style={{
-                                textAlign: "center",
-                                padding: "15px"
-                            }}
-                        >
-                            {category.name}
-                        </h3>
-
-                    </div>
-
-                ))}
-
-            </div>
-
-        </div>
-    );
+        {categories.length === 0 ? (
+          <div className="empty-state">
+            <h3>No categories yet.</h3>
+          </div>
+        ) : (
+          <div className="grid">
+            {categories.map((category) => (
+              <Link
+                key={category.id}
+                to={`/products?category=${encodeURIComponent(category.name)}`}
+                className="category-card"
+              >
+                <img
+                  src={category.image || placeholderImage(category.name, 500, 500)}
+                  alt={category.name}
+                />
+                <div>
+                  <h3>{category.name}</h3>
+                  <p className="muted" style={{ fontSize: "14px", marginTop: "4px" }}>
+                    {countFor(category.name)} products
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default Categories;

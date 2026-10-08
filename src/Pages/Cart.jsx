@@ -1,125 +1,80 @@
-
-import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import useStore from "../hooks/useStore";
+import CartItem from "../components/CartItem";
+import { formatPrice } from "../utils/format";
 
 function Cart() {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Black Oversized T-Shirt",
-      price: 799,
-      quantity: 1,
-      image: "https://via.placeholder.com/150",
-    },
-    {
-      id: 2,
-      name: "Blue Denim Jacket",
-      price: 1999,
-      quantity: 1,
-      image: "https://via.placeholder.com/150",
-    },
-  ]);
+  const navigate = useNavigate();
+  const {
+    cart,
+    cartCount,
+    cartSubtotal,
+    shippingFee,
+    cartTotal,
+    freeShippingThreshold,
+    clearCart,
+  } = useStore();
 
-  const increaseQty = (id) => {
-    setCartItems(
-      cartItems.map((item) =>
-        item.id === id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      )
+  if (cart.length === 0) {
+    return (
+      <div className="page">
+        <div className="empty-state">
+          <h1>Your cart is empty 🛒</h1>
+          <p>Looks like you haven't added anything yet.</p>
+          <Link to="/products" className="btn">
+            Start Shopping
+          </Link>
+        </div>
+      </div>
     );
-  };
-
-  const decreaseQty = (id) => {
-    setCartItems(
-      cartItems.map((item) =>
-        item.id === id && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
-      )
-    );
-  };
-
-  const removeItem = (id) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
-  };
-
-  const totalAmount = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  }
 
   return (
-    <div style={{ padding: "30px" }}>
-      <h1 style={{ textAlign: "center" }}>Shopping Cart 🛒</h1>
+    <div className="page">
+      <div className="container">
+        <h1 className="page-title">Shopping Cart 🛒</h1>
 
-      {cartItems.map((item) => (
         <div
-          key={item.id}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "20px",
-            border: "1px solid #ddd",
-            padding: "15px",
-            marginTop: "20px",
-            borderRadius: "10px",
-          }}
+          className="two-col"
+          style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "24px", alignItems: "start" }}
         >
-          <img
-            src={item.image}
-            alt={item.name}
-            width="120"
-            height="120"
-          />
-
-          <div style={{ flex: 1 }}>
-            <h3>{item.name}</h3>
-            <p>₹{item.price}</p>
-
-            <button onClick={() => decreaseQty(item.id)}>-</button>
-
-            <span style={{ margin: "0 15px" }}>
-              {item.quantity}
-            </span>
-
-            <button onClick={() => increaseQty(item.id)}>+</button>
+          <div>
+            {cart.map((item) => (
+              <CartItem key={item.key} item={item} />
+            ))}
+            <button className="btn btn-outline btn-sm" onClick={clearCart}>
+              Clear Cart
+            </button>
           </div>
 
-          <button
-            onClick={() => removeItem(item.id)}
-            style={{
-              backgroundColor: "red",
-              color: "white",
-              border: "none",
-              padding: "10px",
-              cursor: "pointer",
-            }}
-          >
-            Remove
-          </button>
+          <div className="panel" style={{ padding: "24px" }}>
+            <h2>Order Summary</h2>
+            <div className="summary-row">
+              <span>Items ({cartCount})</span>
+              <span>{formatPrice(cartSubtotal)}</span>
+            </div>
+            <div className="summary-row">
+              <span>Shipping</span>
+              <span>{shippingFee === 0 ? "Free" : formatPrice(shippingFee)}</span>
+            </div>
+            {shippingFee > 0 && (
+              <p className="muted" style={{ fontSize: "13px", marginTop: "8px" }}>
+                Add {formatPrice(freeShippingThreshold - cartSubtotal)} more for free shipping.
+              </p>
+            )}
+            <div className="summary-row summary-total">
+              <span>Total</span>
+              <span>{formatPrice(cartTotal)}</span>
+            </div>
+
+            <button className="btn btn-block" style={{ marginTop: "20px" }} onClick={() => navigate("/checkout")}>
+              Proceed To Checkout
+            </button>
+            <Link to="/products" className="btn btn-outline btn-block" style={{ marginTop: "10px" }}>
+              Continue Shopping
+            </Link>
+          </div>
         </div>
-      ))}
-
-      <div
-        style={{
-          marginTop: "30px",
-          textAlign: "right",
-        }}
-      >
-        <h2>Total: ₹{totalAmount}</h2>
-
-        <button
-          style={{
-            backgroundColor: "black",
-            color: "white",
-            padding: "12px 25px",
-            border: "none",
-            cursor: "pointer",
-            borderRadius: "5px",
-          }}
-        >
-          Proceed To Checkout
-        </button>
       </div>
     </div>
   );

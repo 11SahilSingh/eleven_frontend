@@ -1,83 +1,64 @@
-
-import React, { useState } from "react";
+import { useState } from "react";
+import { Link, Navigate, useLocation } from "react-router-dom";
+import useStore from "../hooks/useStore";
 
 function Login() {
+  const location = useLocation();
+  const { login, currentUser } = useStore();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const redirectTo = location.state?.from?.pathname || "/";
+
+  // After a successful login this re-renders and sends the user on.
+  if (currentUser) {
+    const target = currentUser.role === "admin" && redirectTo === "/" ? "/adminDashboard" : redirectTo;
+    return <Navigate to={target} replace />;
+  }
 
   const handleLogin = (e) => {
     e.preventDefault();
-
-    console.log({
-      email,
-      password,
-    });
-
-    // Call Spring Boot Login API here
+    const result = login(email, password);
+    if (!result.ok) setError(result.error);
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        backgroundColor: "#f5f5f5",
-      }}
-    >
-      <form
-        onSubmit={handleLogin}
-        style={{
-          background: "white",
-          padding: "30px",
-          borderRadius: "10px",
-          width: "350px",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-        }}
-      >
+    <div className="page" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+      <form onSubmit={handleLogin} className="panel" style={{ width: "100%", maxWidth: "380px" }}>
         <h2 style={{ textAlign: "center" }}>Login</h2>
 
         <input
+          className="form-input"
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "15px",
-          }}
+          autoComplete="email"
           required
         />
 
         <input
+          className="form-input"
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "15px",
-          }}
+          autoComplete="current-password"
           required
         />
 
-        <button
-          type="submit"
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "20px",
-            background: "black",
-            color: "white",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
+        {error && <p className="form-error">{error}</p>}
+
+        <button type="submit" className="btn btn-block" style={{ marginTop: "20px" }}>
           Login
         </button>
+
+        <p className="form-footer">
+          New to ELEVEN? <Link to="/register" state={location.state}>Create an account</Link>
+        </p>
+        <p className="form-hint">Demo admin: admin@eleven.com / admin123</p>
       </form>
     </div>
   );
